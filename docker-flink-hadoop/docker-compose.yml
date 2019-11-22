@@ -1,0 +1,80 @@
+version: "3"
+
+services:
+  namenode:
+    image: bde2020/hadoop-namenode:1.2.1-hadoop2.8-java8
+    container_name: namenode
+    ports:
+      - 50070:50070
+      - 9000:9000
+    volumes:
+      - hadoop_namenode:/hadoop3/dfs/name
+    environment:
+      - CLUSTER_NAME=test
+    env_file:
+      - ./hadoop.env
+
+  datanode:
+    image: bde2020/hadoop-datanode:1.2.1-hadoop2.8-java8
+    container_name: datanode
+    ports:
+      - 50075:50075
+    volumes:
+      - hadoop_datanode:/hadoop3/dfs/data
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070"
+    env_file:
+      - ./hadoop.env
+
+  resourcemanager:
+    image: bde2020/hadoop-resourcemanager:1.2.1-hadoop2.8-java8
+    container_name: resourcemanager
+    ports:
+      - 8088:8088
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075"
+    env_file:
+      - ./hadoop.env
+
+  nodemanager1:
+    image: bde2020/hadoop-nodemanager:1.2.1-hadoop2.8-java8
+    container_name: nodemanager
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 resourcemanager:8088"
+    env_file:
+      - ./hadoop.env
+
+  historyserver:
+    image: bde2020/hadoop-historyserver:1.2.1-hadoop2.8-java8
+    container_name: historyserver
+    environment:
+      SERVICE_PRECONDITION: "namenode:50070 datanode:50075 resourcemanager:8088"
+    volumes:
+      - hadoop_historyserver:/hadoop3/yarn/timeline
+    env_file:
+      - ./hadoop.env
+
+  flink-master:
+   image: bde2020/flink-master:1.7.2-hadoop2.8
+   hostname: flink-master
+   container_name: flink-master
+   environment:
+     SERVICE_PRECONDITION: "namenode:50070 datanode:50075"
+   ports:
+     - "8080:8080"
+     - "8081:8081"
+     - "6123:6123"
+
+  flink-worker:
+    image: bde2020/flink-worker:1.7.2-hadoop2.8
+    hostname: flink-worker
+    container_name: flink-worker
+    environment:
+      - FLINK_MASTER_PORT_6123_TCP_ADDR=flink-master
+    depends_on:
+      - flink-master    
+
+volumes:
+  hadoop_namenode:
+  hadoop_datanode:
+  hadoop_historyserver:
