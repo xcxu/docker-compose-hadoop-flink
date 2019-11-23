@@ -1,6 +1,7 @@
 # docker-compose-hadoop-flink
 use docker-compose build hadoop &amp; flink
-
+hadoop version 2.8 reference images:bde2020/hadoop-base
+flink version 1.7.2  reference images:bde2020/flink-master:1.7.2-hadoop2.8
 ## start compose
 docker-compose up -d
 
